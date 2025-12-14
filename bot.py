@@ -564,14 +564,19 @@ import os
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
-# ——— ОСНОВНОЙ ЗАПУСК НА RENDER (WEBHOOK) ———
+# ——— ОСНОВНОЙ ЗАПУСК НА RENDER ———
 async def main():
     dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=True)
 
-    PORT = int(os.getenv("PORT", 8000))
+    # Render даёт порт через env-переменную
+    PORT = int(os.getenv("PORT", "10000"))
+    # Имя сервиса == поддомен: https://<service-name>.onrender.com
+    service_name = os.getenv("RENDER_SERVICE_NAME", "mebel-bot")
     WEBHOOK_PATH = "/webhook"
-    WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_URL')}{WEBHOOK_PATH}"
+    WEBHOOK_URL = f"https://{service_name}.onrender.com{WEBHOOK_PATH}"
+
+    print(f"ℹ️  Устанавливаю webhook на: {WEBHOOK_URL}")
 
     await bot.set_webhook(url=WEBHOOK_URL)
 
@@ -584,9 +589,8 @@ async def main():
     site = web.TCPSite(runner, host="0.0.0.0", port=PORT)
     await site.start()
 
-    # Не завершаем программу — ждём соединений
-    while True:
-        await asyncio.sleep(3600)
+    # Ждём бесконечно
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
