@@ -1,7 +1,6 @@
 import os
 import asyncio
 import logging
-import re
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -41,12 +40,6 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOW
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 
-# ——— ВАЛИДАТОР ФИО ———
-def validate_fio(text: str) -> bool:
-    if not re.fullmatch(r"[а-яА-ЯёЁa-zA-Z\-'\s]{2,50}", text.strip()):
-        return False
-    return len(text.strip().split()) >= 2
-
 # ——— /start ———
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
@@ -69,13 +62,8 @@ async def process_fio(message: Message, state: FSMContext):
         return
 
     fio = message.text.strip()
-    if not validate_fio(fio):
-        await message.answer(
-            "❌ Это не похоже на ФИО\\.\n\n"
-            "Введите хотя бы *Фамилию* и *Имя*\\. "
-            "Без цифр и лишних символов\\.\n\n"
-            "пример: _Иванов Иван_"
-        )
+    if not fio:
+        await message.answer("Пожалуйста, введите ваше ФИО\\. 📝")
         return
 
     # Удаляем предыдущее сообщение бота (вопрос)
@@ -85,13 +73,13 @@ async def process_fio(message: Message, state: FSMContext):
         try:
             await bot.delete_message(chat_id=message.chat.id, message_id=prev_id)
         except Exception:
-            pass  # Игнорируем ошибку (например, если сообщение уже удалено)
+            pass
 
     # Отправляем следующий вопрос
     sent = await message.answer(
         f"Отлично\\! Здравствуйте, {fio}\\! ✨\n\n"
         "📞 *Контактный телефон*\\.\n"
-        "пример: _89991234567_"
+        "пример: _+79991234567_"
     )
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
@@ -130,7 +118,7 @@ async def process_phone(message: Message, state: FSMContext):
     await state.update_data(phone=clean_phone)
 
     sent = await message.answer(
-    "🪑 *Изделие*\\.\n"
+    "📝 *Изделие*\\.\n"
     "пример: _Шкаф Малиновая д15 кв25_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -152,7 +140,7 @@ async def process_item_type(message: Message, state: FSMContext):
     await state.update_data(item_type=item_name)
 
     sent = await message.answer(
-    "📦 *Корпус*\\.\n"
+    "📝 *Корпус*\\.\n"
     "пример: _16мм ЛДСП Платиновый белый гладкий W980 SM Egger_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -174,7 +162,7 @@ async def process_carcass_material(message: Message, state: FSMContext):
     await state.update_data(carcass_material=material)
 
     sent = await message.answer(
-    "🚪 *Фасады*\\.\n"
+    "📝 *Фасады*\\.\n"
     "пример: _Накладные 16мм ЛДСП Вишня Риверсайд Светлая K077 PW Kronospan_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -196,7 +184,7 @@ async def process_facade_material(message: Message, state: FSMContext):
     await state.update_data(facade_material=facade)
 
     sent = await message.answer(
-    "◀️▶️ *Видимые боковины*\\.\n"
+    "📝 *Видимые боковины*\\.\n"
     "пример: _16мм ЛДСП Дуб сонома светлый U103 ST9 Egger_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -218,7 +206,7 @@ async def process_visible_sides_material(message: Message, state: FSMContext):
     await state.update_data(visible_sides_material=visible_sides)
 
     sent = await message.answer(
-    "🧱 *Задняя стенка*\\.\n"
+    "📝 *Задняя стенка*\\.\n"
     "пример: _ХДФ 3мм в паз_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -240,7 +228,7 @@ async def process_back_wall(message: Message, state: FSMContext):
     await state.update_data(back_wall=back_wall)
 
     sent = await message.answer(
-    "🪚 *Столешница и панель*\\.\n"
+    "📝 *Столешница и панель*\\.\n"
     "пример: _Столешница 38мм, стеновая панель 6мм_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -262,7 +250,7 @@ async def process_countertop_and_wall_panel(message: Message, state: FSMContext)
     await state.update_data(countertop_and_wall_panel=value)
 
     sent = await message.answer(
-    "🔼 *Козырёк*\\.\n"
+    "📝 *Козырёк*\\.\n"
     "пример: _60мм_ или _без козырька_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -284,7 +272,7 @@ async def process_canopy_height(message: Message, state: FSMContext):
     await state.update_data(canopy_height=canopy)
 
     sent = await message.answer(
-    "🔽 *Цоколь*\\.\n"
+    "📝 *Цоколь*\\.\n"
     "пример: _100мм материал корпуса_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -306,7 +294,7 @@ async def process_plinth_height(message: Message, state: FSMContext):
     await state.update_data(plinth_height=plinth)
 
     sent = await message.answer(
-    "✅ *Кромка*\\.\n"
+    "📝 *Кромка*\\.\n"
     "пример: _Корпус 1мм вкруг все детали, Фасады 2мм_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -328,7 +316,7 @@ async def process_edge_banding(message: Message, state: FSMContext):
     await state.update_data(edge_banding=edge_info)
 
     sent = await message.answer(
-    "🔽🔼 *Дно и крышка*\\.\n"
+    "📝 *Дно и крышка*\\.\n"
     "пример: _Дно вкладное, крышка накладная_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -350,7 +338,7 @@ async def process_bottom_and_top_type(message: Message, state: FSMContext):
     await state.update_data(bottom_and_top_type=value)
 
     sent = await message.answer(
-    "📏 *Технологические зазоры*\\.\n"
+    "📝 *Технологические зазоры*\\.\n"
     "пример: _По бокам изделия 10мм суммарно, от потолка 15мм_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -372,7 +360,7 @@ async def process_technical_gaps(message: Message, state: FSMContext):
     await state.update_data(technical_gaps=gaps)
 
     sent = await message.answer(
-    "🚪 *Петли*\\.\n"
+    "📝 *Петли*\\.\n"
     "пример: _Крестовые на евровинтах_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -394,7 +382,7 @@ async def process_hinges(message: Message, state: FSMContext):
     await state.update_data(hinges=hinges_info)
 
     sent = await message.answer(
-    "🦶 *Опоры*\\.\n"
+    "📝 *Опоры*\\.\n"
     "пример: _Кухонные 60мм_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -416,7 +404,7 @@ async def process_supports(message: Message, state: FSMContext):
     await state.update_data(supports=supports_info)
 
     sent = await message.answer(
-    "🗄 *Ящики*\\.\n"
+    "📝 *Ящики*\\.\n"
     "пример: _Дерев ящ на напр скрыт монт с доводчиком Firmax_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
@@ -491,10 +479,10 @@ async def finalize_application(message: Message, state: FSMContext):
 
     await state.clear()
     await message.answer(
-        "Спасибо за заявку! ✨\n\n"
-        "Мы создадим группу в Telegram по данному проекту и добавим вас.\n"
-        "В группе можно обсуждать детали и отправлять материалы.\n\n"
-        "Хорошего дня! ✅\n\n"
+        "Заявка отправлена! 🎉\n\n"
+        "Мы создадим в Telegram персональную группу для данного проекта и добавим вас туда. "
+        "Там можно будет обсуждать детали и обмениваться файлами.\n\n"
+        "Хорошего дня! 👍\n\n"
         "Для новой заявки отправьте /start",
         parse_mode=None
     )
