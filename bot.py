@@ -491,10 +491,10 @@ async def finalize_application(message: Message, state: FSMContext):
 
     await state.clear()
     await message.answer(
-        "Спасибо за заявку\\! ✨\n\n"
+        "Спасибо за заявку! ✨\n\n"
         "Мы создадим группу в Telegram по данному проекту и добавим вас.\n"
         "В группе можно обсуждать детали и отправлять материалы.\n\n"
-        "Хорошего дня\\! ✅\n\n"
+        "Хорошего дня! ✅\n\n"
         "Для новой заявки отправьте /start",
         parse_mode=None
     )
