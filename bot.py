@@ -11,6 +11,11 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
+def escape_markdown_v2(text: str) -> str:
+    """Экранирует спецсимволы для MarkdownV2"""
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return ''.join(f'\\{char}' if char in escape_chars else char for char in text)
+
 # ——— ЗАГРУЗКА НАСТРОЕК ИЗ .env ———
 TOKEN = os.getenv("BOT_TOKEN")
 YOUR_TELEGRAM_ID = int(os.getenv("YOUR_TELEGRAM_ID"))
@@ -75,11 +80,14 @@ async def process_fio(message: Message, state: FSMContext):
         except Exception:
             pass
 
-    # Отправляем следующий вопрос
-    sent = await message.answer(
-        f"Отлично\\! Здравствуйте, {fio}\\! ✨\n\n"
-        "Теперь укажите *контактный телефон*"
-    )
+	# Экранируем fio для MarkdownV2
+	safe_fio = escape_markdown_v2(fio)
+
+	# Отправляем следующий вопрос
+	sent = await message.answer(
+    	f"Отлично\\! Здравствуйте, {safe_fio}\\! ✨\n\n"
+    	"Теперь укажите *контактный телефон*"
+	)
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
     await state.set_state(Form.phone)
