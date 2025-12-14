@@ -86,11 +86,13 @@ async def process_fio(message: Message, state: FSMContext):
     # ✅ Теперь можно безопасно подставить в сообщение
     sent = await message.answer(
         f"Отлично\\! Здравствуйте, {safe_fio}\\! ✨\n\n"
-        "Теперь укажите *контактный телефон* \\(привязанный к Telegram, чтобы мы в дальнейшем могли добавить вас в группу по данному проекту\\)"
+        "📞 *Контактный телефон*\\.\n"
+        "пример: _+79991234567_"
     )
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
     await state.set_state(Form.phone)
+
 # ——— ОБРАБОТКА ТЕЛЕФОНА ———
 @router.message(Form.phone)
 async def process_phone(message: Message, state: FSMContext):
@@ -124,9 +126,8 @@ async def process_phone(message: Message, state: FSMContext):
     await state.update_data(phone=clean_phone)
 
     sent = await message.answer(
-        "Введите *наименование изделия*\\.\n\n"
-        "Пример:\n"
-        "_Шкаф Малиновая д15 кв25_"
+    "📝 *Изделие*\\.\n"
+    "пример: _Шкаф Малиновая д15 кв25_"
     )
     await state.update_data(prev_bot_message_id=sent.message_id)
     await state.set_state(Form.item_type)
