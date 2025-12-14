@@ -1,7 +1,6 @@
 import os
 import asyncio
 import logging
-import re
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -41,12 +40,6 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOW
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 
-# ——— ВАЛИДАТОР ФИО ———
-def validate_fio(text: str) -> bool:
-    if not re.fullmatch(r"[а-яА-ЯёЁa-zA-Z\-'\s]{2,50}", text.strip()):
-        return False
-    return len(text.strip().split()) >= 2
-
 # ——— /start ———
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
@@ -69,13 +62,8 @@ async def process_fio(message: Message, state: FSMContext):
         return
 
     fio = message.text.strip()
-    if not validate_fio(fio):
-        await message.answer(
-            "❌ Похоже, это не похоже на ФИО\\.\n\n"
-            "Введите хотя бы *Фамилию* и *Имя* на русском или английском\\. "
-            "Без цифр и лишних символов\\.\n\n"
-            "Пример: _Иванов Иван_"
-        )
+    if not fio:
+        await message.answer("Пожалуйста, введите ваше ФИО\\. 📝")
         return
 
     # Удаляем предыдущее сообщение бота (вопрос)
@@ -85,12 +73,12 @@ async def process_fio(message: Message, state: FSMContext):
         try:
             await bot.delete_message(chat_id=message.chat.id, message_id=prev_id)
         except Exception:
-            pass  # Игнорируем ошибку (например, если сообщение уже удалено)
+            pass
 
     # Отправляем следующий вопрос
     sent = await message.answer(
         f"Отлично\\! Здравствуйте, {fio}\\! ✨\n\n"
-        "Теперь укажите *контактный телефон* \\(привязанный к Telegram, чтобы мы в дальнейшем могли добавить вас в группу по данному проекту\\)"
+        "Теперь укажите *контактный телефон*"
     )
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
