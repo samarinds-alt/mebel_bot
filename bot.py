@@ -9,6 +9,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
 # ——— ЗАГРУЗКА НАСТРОЕК ИЗ .env ———
 TOKEN = os.getenv("BOT_TOKEN")
@@ -558,11 +560,33 @@ async def finalize_application(message: Message, state: FSMContext):
         parse_mode=None
     )
 
-# ——— ОСНОВНОЙ ЗАПУСК ———
+import os
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
+
+# ——— ОСНОВНОЙ ЗАПУСК НА RENDER (WEBHOOK) ———
 async def main():
     dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+
+    PORT = int(os.getenv("PORT", 8000))
+    WEBHOOK_PATH = "/webhook"
+    WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_URL')}{WEBHOOK_PATH}"
+
+    await bot.set_webhook(url=WEBHOOK_URL)
+
+    app = web.Application()
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=PORT)
+    await site.start()
+
+    # Не завершаем программу — ждём соединений
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
