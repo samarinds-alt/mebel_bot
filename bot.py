@@ -11,6 +11,11 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
+def escape_markdown_v2(text: str) -> str:
+    """Экранирует спецсимволы для MarkdownV2"""
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return ''.join(f'\\{char}' if char in escape_chars else char for char in text)
+
 # ——— ЗАГРУЗКА НАСТРОЕК ИЗ .env ———
 TOKEN = os.getenv("BOT_TOKEN")
 YOUR_TELEGRAM_ID = int(os.getenv("YOUR_TELEGRAM_ID"))
@@ -69,21 +74,24 @@ async def process_fio(message: Message, state: FSMContext):
     # Удаляем предыдущее сообщение бота (вопрос)
     data = await state.get_data()
     prev_id = data.get("prev_bot_message_id")
-    if prev_id:
+    if prev_id is not None:
         try:
             await bot.delete_message(chat_id=message.chat.id, message_id=prev_id)
         except Exception:
             pass
 
-    # Отправляем следующий вопрос
+    # ✅ Экранируем fio для MarkdownV2
+    safe_fio = escape_markdown_v2(fio)
+
+    # ✅ ОБЯЗАТЕЛЬНО: f-строка
     sent = await message.answer(
-        f"Отлично\\! Здравствуйте, {fio}\\! ✨\n\n"
+        f"Отлично\\! Здравствуйте, {safe_fio}\\! ✨\n\n"
         "📞 *Контактный телефон*\\.\n"
         "пример: _+79991234567_"
     )
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
-    await state.set_state(Form.phone)
+    await state.set_state(Form.phone)  # ← ЭТА СТРОКА ОБЯЗАТЕЛЬНА
 
 # ——— ОБРАБОТКА ТЕЛЕФОНА ———
 @router.message(Form.phone)
