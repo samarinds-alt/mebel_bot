@@ -80,18 +80,17 @@ async def process_fio(message: Message, state: FSMContext):
         except Exception:
             pass
 
-	# Экранируем fio для MarkdownV2
-	safe_fio = escape_markdown_v2(fio)
+    # ✅ Экранируем fio для безопасного использования в MarkdownV2
+    safe_fio = escape_markdown_v2(fio)
 
-	# Отправляем следующий вопрос
-	sent = await message.answer(
-    	f"Отлично\\! Здравствуйте, {safe_fio}\\! ✨\n\n"
-    	"Теперь укажите *контактный телефон*"
-	)
+    # ✅ Теперь можно безопасно подставить в сообщение
+    sent = await message.answer(
+        f"Отлично\\! Здравствуйте, {safe_fio}\\! ✨\n\n"
+        "Теперь укажите *контактный телефон* \\(привязанный к Telegram, чтобы мы в дальнейшем могли добавить вас в группу по данному проекту\\)"
+    )
     
     await state.update_data(fio=fio, prev_bot_message_id=sent.message_id)
     await state.set_state(Form.phone)
-
 # ——— ОБРАБОТКА ТЕЛЕФОНА ———
 @router.message(Form.phone)
 async def process_phone(message: Message, state: FSMContext):
