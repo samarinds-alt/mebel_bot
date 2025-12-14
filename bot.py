@@ -504,18 +504,22 @@ async def main():
     dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=True)
 
-    # Render даёт порт через env-переменную
     PORT = int(os.getenv("PORT", "10000"))
-    # Имя сервиса == поддомен: https://<service-name>.onrender.com
     service_name = os.getenv("RENDER_SERVICE_NAME", "mebel-bot")
     WEBHOOK_PATH = "/webhook"
     WEBHOOK_URL = f"https://{service_name}.onrender.com{WEBHOOK_PATH}"
 
     print(f"ℹ️  Устанавливаю webhook на: {WEBHOOK_URL}")
-
     await bot.set_webhook(url=WEBHOOK_URL)
 
     app = web.Application()
+
+    # Добавляем health check на корень
+    async def health_check(request):
+        return web.Response(text="OK", status=200)
+    app.router.add_get('/', health_check)
+
+    # Регистрируем webhook
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
@@ -524,7 +528,6 @@ async def main():
     site = web.TCPSite(runner, host="0.0.0.0", port=PORT)
     await site.start()
 
-    # Ждём бесконечно
     await asyncio.Event().wait()
 
 if __name__ == "__main__":
