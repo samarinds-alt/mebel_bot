@@ -458,6 +458,14 @@ async def process_additional_info(message: Message, state: FSMContext):
     # Сразу финализируем
     await finalize_application(message, state)
 
+# ——— ОБРАБОТЧИК ЛЮБЫХ СООБЩЕНИЙ ВНЕ АНКЕТЫ ———
+@router.message()
+async def handle_unexpected_message(message: Message):
+    await message.answer(
+        "Пожалуйста, используйте /start для начала новой заявки.\n\n"
+        "Если у вас есть вопросы — напишите @DS_Meb"
+    )
+
 # ——— ФИНАЛИЗАЦИЯ ———
 async def finalize_application(message: Message, state: FSMContext):
     data = await state.get_data()
